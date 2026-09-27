@@ -1,0 +1,17 @@
+# 可选：骨架结构检查（占位）
+# 默认不做依赖安装；fork 后方可按需启用。
+name: skeleton-check
+on:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  tree:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check required paths exist
+        run: |
+          test -f rules/AGENTS.md
+          test -f rules/ARCHITECTURE.md
+          test -d caps/skills
+          test ! -d template

@@ -1,0 +1,105 @@
+# git.rules — MAHEA Git 提交与推送规则
+
+> 执行 `git add` / `git commit` / `git push` / 开 PR **之前**必须阅读本文件。  
+> 本文件整合并引用：`rules/AGENTS.md`、`rules/CONTRIBUTING.md`、`rules/SOURCE_POLICY.md`、`rules/NAMING.md`、`caps/skills/retro/SKILL.md`、`.github/pull_request_template.md`。
+
+## 1. 何时可以提交 / 推送
+
+1. **仅在人类明确要求**时执行 `git commit`；仅在明确要求时 `git push`。
+2. 提交前跑一遍 `caps/skills/retro` 自查（见第 4 节）；发现违规先修再提交。
+3. 建议先跑：`python scripts/check_skeleton.py`（若改动触及骨架路径）。
+
+## 2. 安全协议（硬约束）
+
+1. **禁止**修改 git config（`user.name` / `user.email` / 凭证等）。
+2. **禁止**破坏性操作，除非人类在本次请求中明确授权：`push --force`、`hard reset`、删除远端分支等。
+3. **禁止**对 `main` / `master` 强制推送；若被要求，先警告再停下等待确认。
+4. **禁止**跳过 hooks（`--no-verify`、`--no-gpg-sign` 等），除非人类明确要求。
+5. **禁止**使用交互式 git（`-i`：如 `rebase -i`、`add -i`）。
+6. **慎用 amend**：仅当人类明确要求 amend，或「commit 已成功且 hook 自动改文件需纳入」，且满足：
+   - HEAD 由本次会话创建；
+   - 尚未推送到远端（分支仍 ahead 且未与远端分叉推送）；
+   - 若 commit **失败/被 hook 拒绝**，不得 amend，应修复后 **新建** commit。
+7. **禁止**提交密钥与机密：`.env`、凭证文件、私钥、含 API key 的配置；若人类点名要提交，先警告。
+8. 无变更时 **不** 创建空 commit。
+
+## 3. 提交内容范围
+
+1. 只暂存与本次意图相关的文件；不混入无关本地实验。
+2. 遵守 `rules/NAMING.md`：无数字前缀模块名；无 `template/` 目录。
+3. 遵守 `rules/SOURCE_POLICY.md`：新增外部引用须有 `stock/` 卡片（可为 `pending`）。
+4. 不擅自引入第三方依赖清单（无确认不添加 `requirements.txt` / `package.json` 运行时依赖）。
+5. 不改写 `LICENSE` 为不兼容条款；扩展根 `README.md` 时保留既有定位句（见 `rules/AGENTS.md`）。
+
+## 4. 提交前自查清单（整合 retro + AGENTS + CONTRIBUTING）
+
+- [ ] 已阅读本次相关的 `rules/`（含本文件）
+- [ ] 无数字前缀命名；无 `template/`
+- [ ] 外部引用已在 `stock/` 登记或标记 `pending`
+- [ ] 未引入未经确认的第三方依赖
+- [ ] 新建/改动的模块 README 仍含职责、接口、关系（若适用）
+- [ ] 未破坏 `LICENSE` 与根 `README.md` 既有定位句
+- [ ] 未把 MAHEA 写成单一 Harness 复刻
+- [ ] 深度符合约定（默认可为文档 + 占位）
+- [ ] 无机密文件进入暂存区
+- [ ] `python scripts/check_skeleton.py` 通过（骨架改动时）
+
+## 5. 推荐命令序列
+
+并行了解状态（提交前）：
+
+```text
+git status
+git diff          # 含已暂存与未暂存
+git log -5 --oneline
+```
+
+然后顺序执行：
+
+```text
+git add <相关路径>
+git commit -m "<message>"
+git status        # 确认成功
+# 仅当人类要求推送：
+git push -u origin HEAD   # 若已设置 upstream 则 git push 即可
+```
+
+### 提交说明（message）
+
+1. 先看 `git log` 对齐本仓库既有风格。
+2. 1–2 句，写清 **为什么**，而非文件罗列；动词准确（add / update / fix / docs 等）。
+3. 在支持 HEREDOC 的环境用字面量传入 message，避免 shell 转义问题；Windows PowerShell 可用 here-string：
+
+```powershell
+git commit -m @"
+Add MAHEA harness skeleton and governance docs.
+
+EOF
+"@
+```
+
+（或等价的多行 `-m`；保持信息简洁完整。）
+
+## 6. 推送（push）
+
+1. 推送前确认：本地 commit 已成功；`git status` 干净或仅含有意保留的未跟踪文件。
+2. 默认推送当前分支到已跟踪的 `origin`；新分支使用 `git push -u origin HEAD`。
+3. 推送失败若为认证问题：按宿主环境修复凭证后重试，不改写无关 git config。
+4. 不默认创建 GitHub Release / 不默认开 PR，除非人类要求（开 PR 时另循 `.github/pull_request_template.md` 与 `rules/CONTRIBUTING.md`）。
+
+## 7. PR（若后续需要）
+
+描述须包含：动机、触及模块、是否新增 stock、是否超出深度 A。  
+清单对齐 [`.github/pull_request_template.md`](../.github/pull_request_template.md) 与 `rules/CONTRIBUTING.md`「PR 检查清单」。
+
+## 8. 引用索引
+
+| 主题 | 权威文件 |
+|------|----------|
+| 协作入口与提交前摘要 | `rules/AGENTS.md` |
+| 贡献与 PR | `rules/CONTRIBUTING.md` |
+| 素材与禁止编造 | `rules/SOURCE_POLICY.md` |
+| 命名 | `rules/NAMING.md` |
+| 提交前复盘技能 | `caps/skills/retro/SKILL.md` |
+| PR 模板 | `.github/pull_request_template.md` |
+| 骨架路径检查 | `scripts/check_skeleton.py` |
